@@ -1,0 +1,12 @@
+#!/bin/sh
+
+echo "🔍 Running pre-commit before pushing..."
+pre-commit run --all-files
+
+if [ $? -ne 0 ]; then
+  echo "❌ Pre-commit failed. Push aborted."
+  exit 1
+fi
+
+echo "✅ Pre-commit passed. Push continuing..."
+exit 0
