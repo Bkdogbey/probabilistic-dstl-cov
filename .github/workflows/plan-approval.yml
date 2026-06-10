@@ -4,16 +4,15 @@ on:
   issue_comment:
     types: [created]
 
-# Explicitly elevate permissions for the repository's native GITHUB_TOKEN
+# Explicitly elevate permissions for this workflow run
 permissions:
-  contents: write # Required to create the new git branch
-  issues: write # Required to assign the user and post comments
+  contents: write    # Required to create the new git branch
+  issues: write      # Required to assign the user and post comments
 
 jobs:
   approve_and_branch:
-    # Trigger only when the PI comments "/approve"
-    # Single quotes wrap the raw tags so the YAML linter doesn't choke during template editing
-    if: 'contains(github.event.comment.body, "/approve")'
+    # Trigger only when the PI/collaborator comments "/approve"
+    if: contains(github.event.comment.body, '/approve')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -27,15 +26,15 @@ jobs:
             const issueNumber = context.issue.number;
             const rawTitle = context.payload.issue.title;
 
-            // 1. Convert title to safe kebab-case and strip out illegal git characters
+            // 1. Convert title to kebab-case and strip out illegal git characters
             const cleanTitle = rawTitle
               .toLowerCase()
-              .replace(/\[[^\]]*\]/g, '')
-              .replace(/[^a-z0-9\s-_]/g, '')
+              .replace(/\[[^\]]*\]/g, '') // Remove brackets like [TASK]
+              .replace(/[^a-z0-9\s-_]/g, '') // Strip out special characters
               .trim()
-              .replace(/[\s-_]+/g, '-');
+              .replace(/[\s-_]+/g, '-'); // Turn spaces into a single dash
 
-            // Final format: feature/issue-5-test-pipeline
+            // Final format: feature/issue-5-test
             const branchName = `feature/issue-${issueNumber}-${cleanTitle}`.replace(/-+$/, '');
 
             // 2. Get the latest commit SHA from the default branch to branch off of
@@ -44,7 +43,7 @@ jobs:
               repo: context.repo.repo
             });
             const defaultBranch = repoInfo.default_branch;
-
+            
             const { data: refData } = await github.rest.git.getRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
