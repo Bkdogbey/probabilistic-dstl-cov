@@ -1,0 +1,6 @@
+type: single_integrator
+nx: 2        # [x, y]
+nu: 2        # [vx, vy]
+dt: 0.1
+u_max: 1.0
+sigma_w: 0.05  # process noise std (all channels)

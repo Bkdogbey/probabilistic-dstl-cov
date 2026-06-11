@@ -1,0 +1,6 @@
+type: double_integrator
+nx: 4        # [x, y, vx, vy]
+nu: 2        # [ax, ay]
+dt: 0.1
+u_max: 2.0
+sigma_w: 0.1  # process noise std (velocity channels only)

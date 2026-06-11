@@ -1,0 +1,21 @@
+device: "auto"          # "auto" → cuda if available, else cpu
+save_dir: "data/results"
+animate: false
+
+optimizer:
+  lr_v: 0.05
+  lr_k: 0.005
+  max_iters: 500
+  converge_patience: 20
+  n_starts: 1
+
+weights:
+  w_phi: 1.0
+  w_trace_terminal: 0.1
+  w_dist: 0.05
+  w_du: 0.0005
+  w_K: 0.0005
+  w_repulsion: 0.5
+  obs_margin: 0.5
+
+alpha: 0.95

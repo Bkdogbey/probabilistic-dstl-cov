@@ -1,0 +1,42 @@
+# Lane Change — open-loop covariance steering
+#
+# Road layout (x = longitudinal, y = lateral):
+#   Right lane:  y ∈ [0.0, 3.5]  ← ego starts here
+#   Left lane:   y ∈ [3.5, 7.0]  ← target lane
+#
+# Two circular obstacles block the right lane.
+
+label: "Lane Change (Open-Loop)"
+horizon: 20
+
+optimizer:
+  lr_v: 0.05
+  lr_k: 0.01
+  max_iters: 500
+  alpha: 0.95
+
+weights:
+  w_phi: 10.0
+  w_du: 0.001
+  w_dist: 0.1
+  w_obs: 5.0
+  w_K: 0.005
+  w_cov: 0.1
+
+initial_state:
+  mean: [0.0, 1.5, 3.0, 0.0]         # [x, y, vx, vy]
+  cov_diag: [0.1, 0.1, 0.05, 0.05]
+
+goal:
+  x: [9.0, 11.0]
+  y: [3.0, 5.5]
+
+bounds:
+  x: [-1.0, 11.0]
+  y: [0.0, 7.0]
+
+obstacles:
+  - center: [5.0, 1.5]
+    radius: 0.8
+  - center: [7.5, 2.5]
+    radius: 0.8
