@@ -1,7 +1,6 @@
 """Integration tests for the lane-change planner."""
 
 import torch
-import pytest
 
 from dynamics import DoubleIntegrator
 from planning.environment import Environment
@@ -16,20 +15,23 @@ def _make_planner(steerer="open_loop", max_iters=50, T=20):
     env.add_circle_obstacle([5.0, 1.5], 0.8)
     env.add_circle_obstacle([7.5, 2.5], 0.8)
 
-    mu0    = torch.tensor([0.0, 1.5, 3.0, 0.0])
+    mu0 = torch.tensor([0.0, 1.5, 3.0, 0.0])
     Sigma0 = torch.diag(torch.tensor([0.1, 0.1, 0.05, 0.05]))
 
-    planner = ProbabilisticSTLPlanner(dyn, env, T, steerer=steerer,
-                                      config={"max_iters": max_iters})
+    planner = ProbabilisticSTLPlanner(
+        dyn, env, T, steerer=steerer, config={"max_iters": max_iters}
+    )
     return planner, mu0, Sigma0, T
 
 
 def test_open_loop_returns_valid_result():
     planner, mu0, Sigma0, T = _make_planner("open_loop")
-    mean_trace, cov_trace, best_u, best_K, best_p, history = planner.solve(mu0, Sigma0, verbose=False)
+    mean_trace, cov_trace, best_u, best_K, best_p, history = planner.solve(
+        mu0, Sigma0, verbose=False
+    )
 
-    assert mean_trace.shape  == (1, T + 1, 4)
-    assert cov_trace.shape   == (1, T + 1, 4, 4)
+    assert mean_trace.shape == (1, T + 1, 4)
+    assert cov_trace.shape == (1, T + 1, 4, 4)
     assert torch.isfinite(mean_trace).all()
     assert torch.isfinite(cov_trace).all()
     assert 0.0 <= best_p <= 1.0
@@ -37,7 +39,9 @@ def test_open_loop_returns_valid_result():
 
 def test_closed_loop_returns_valid_result():
     planner, mu0, Sigma0, T = _make_planner("closed_loop")
-    mean_trace, cov_trace, best_u, best_K, best_p, history = planner.solve(mu0, Sigma0, verbose=False)
+    mean_trace, cov_trace, best_u, best_K, best_p, history = planner.solve(
+        mu0, Sigma0, verbose=False
+    )
 
     assert mean_trace.shape == (1, T + 1, 4)
     assert torch.isfinite(mean_trace).all()
@@ -70,20 +74,19 @@ def test_closed_loop_K_receives_gradient():
     T, mu0 = 20, torch.tensor([0.0, 1.5, 1.0, 0.0])
     Sigma0 = torch.diag(torch.tensor([0.1, 0.1, 0.05, 0.05]))
 
-    V = torch.randn(T, dyn.nu) * 0.1   # small V → sech²(V) ≈ 1, K_eff ≠ 0
+    V = torch.randn(T, dyn.nu) * 0.1  # small V → sech²(V) ≈ 1, K_eff ≠ 0
     K = nn.Parameter(torch.zeros(T, dyn.nu, dyn.nx))
 
     spec = env.get_specification(T)
     mean_trace, cov_trace = dyn(V, mu0, Sigma0, K=K)
-    beliefs = [GaussianBelief(mean_trace[:, t, :], cov_trace[:, t, :, :])
-               for t in range(T + 1)]
+    beliefs = [GaussianBelief(mean_trace[:, t, :], cov_trace[:, t, :, :]) for t in range(T + 1)]
     stl_trace = spec(BeliefTrajectory(beliefs))
 
-    loss = -torch.log(stl_trace[0, 0, 1] + 1e-4)  # upper bound for gradient signal
+    loss = -torch.log(stl_trace[0, 0, 0] + 1e-4)  # lower bound (product rule keeps gradient alive)
     loss.backward()
 
     assert K.grad is not None, "K.grad is None"
-    assert K.grad.abs().sum() > 0, f"K.grad is all zeros"
+    assert K.grad.abs().sum() > 0, "K.grad is all zeros"
 
 
 def test_covariance_psd_throughout_trajectory():
@@ -100,3 +103,21 @@ def test_history_nonempty():
     planner, mu0, Sigma0, _ = _make_planner("open_loop")
     _, _, _, _, _, history = planner.solve(mu0, Sigma0, verbose=False)
     assert len(history) > 0
+
+
+def test_closed_loop_improves():
+    """Closed-loop must not lose more than 0.05 vs open-loop on a fixed seed."""
+    mu0 = torch.tensor([0.0, 1.5, 3.0, 0.0])
+    Sigma0 = torch.diag(torch.tensor([0.1, 0.1, 0.05, 0.05]))
+
+    torch.manual_seed(0)
+    ol, _, _, _ = _make_planner("open_loop", max_iters=200)
+    *_, p_open, _ = ol.solve(mu0, Sigma0, verbose=False)
+
+    torch.manual_seed(0)
+    cl, _, _, _ = _make_planner("closed_loop", max_iters=200)
+    *_, p_closed, _ = cl.solve(mu0, Sigma0, verbose=False)
+
+    assert p_closed >= p_open - 0.05, (
+        f"Closed-loop ({p_closed:.4f}) fell more than 0.05 below open-loop ({p_open:.4f})"
+    )

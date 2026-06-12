@@ -1,0 +1,41 @@
+# Aggressive lane change: obstacle starts further ahead and moves faster.
+# Matches canonical Bkdogbey/probabilistic-dstl lane_change_aggressive.yaml geometry.
+# T=20, dt=0.1 → 2 s horizon.
+
+label: "Lane Merge Aggressive (Open-Loop)"
+horizon: 20
+
+initial_state:
+  mean: [0.0, 0.0, 3.5, 0.0]          # [x, y, vx, vy] — Lane 1 centre
+  cov_diag: [0.1, 0.1, 0.05, 0.05]
+
+goal:
+  x: [0.0, 200.0]                      # any x — only lateral position matters
+  y: [2.0, 6.0]                        # Lane 2
+
+bounds:
+  x: [-1.0, 15.0]
+  y: [-2.0, 6.0]                       # road boundary
+
+road:
+  y_min: -2.0
+  y_max: 6.0
+  lane_divider: 2.0
+
+moving_obstacle:
+  x0: 7.0                              # further ahead — less time before encounter
+  speed: 0.8                           # faster — closing gap with ego quickly
+  y: 4.0                               # Lane 2 centre
+  width: 2.5
+  height: 1.5
+
+optimizer:
+  lr_v: 0.05
+  max_iters: 500
+  warmup_iters: 100
+  alpha: 0.90                          # lower threshold for harder scenario
+
+weights:
+  w_phi: 10.0
+  w_du: 0.001
+  w_K: 0.005

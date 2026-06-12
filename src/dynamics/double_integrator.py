@@ -19,19 +19,31 @@ class DoubleIntegrator(BaseDynamics):
 
     def _build_matrices(self, sigma_w: float) -> None:
         dt = self.dt
-        self.register_buffer("_A", torch.tensor([
-            [1., 0., dt,  0.],
-            [0., 1.,  0., dt],
-            [0., 0.,  1.,  0.],
-            [0., 0.,  0.,  1.],
-        ], device=self.device))
+        self.register_buffer(
+            "_A",
+            torch.tensor(
+                [
+                    [1.0, 0.0, dt, 0.0],
+                    [0.0, 1.0, 0.0, dt],
+                    [0.0, 0.0, 1.0, 0.0],
+                    [0.0, 0.0, 0.0, 1.0],
+                ],
+                device=self.device,
+            ),
+        )
 
-        self.register_buffer("_B", torch.tensor([
-            [0.5 * dt**2, 0.],
-            [0., 0.5 * dt**2],
-            [dt, 0.],
-            [0., dt],
-        ], device=self.device))
+        self.register_buffer(
+            "_B",
+            torch.tensor(
+                [
+                    [0.5 * dt**2, 0.0],
+                    [0.0, 0.5 * dt**2],
+                    [dt, 0.0],
+                    [0.0, dt],
+                ],
+                device=self.device,
+            ),
+        )
 
-        d = torch.tensor([0., 0., sigma_w, sigma_w], device=self.device)
-        self.register_buffer("_DDT", torch.diag(d ** 2))
+        d = torch.tensor([0.0, 0.0, sigma_w, sigma_w], device=self.device)
+        self.register_buffer("_DDT", torch.diag(d**2))

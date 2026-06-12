@@ -1,0 +1,42 @@
+# Lane change (closed-loop): same environment as lane_merge.yaml.
+# Feedback gain K_t jointly optimized to steer covariance into Lane 2.
+# Matches canonical Bkdogbey/probabilistic-dstl lane_change.yaml geometry.
+
+label: "Lane Merge (Closed-Loop)"
+horizon: 20
+
+initial_state:
+  mean: [0.0, 0.0, 3.5, 0.0]          # [x, y, vx, vy] — Lane 1 centre
+  cov_diag: [0.1, 0.1, 0.05, 0.05]
+
+goal:
+  x: [0.0, 200.0]                      # any x — only lateral position matters
+  y: [2.0, 6.0]                        # Lane 2
+
+bounds:
+  x: [-1.0, 15.0]
+  y: [-2.0, 6.0]                       # road boundary
+
+road:
+  y_min: -2.0
+  y_max: 6.0
+  lane_divider: 2.0
+
+moving_obstacle:
+  x0: 3.0
+  speed: 0.3                           # slow vehicle already in target lane
+  y: 4.0                               # Lane 2 centre
+  width: 2.5
+  height: 1.5
+
+optimizer:
+  lr_v: 0.05
+  lr_k: 0.01
+  max_iters: 500
+  warmup_iters: 100
+  alpha: 0.95
+
+weights:
+  w_phi: 10.0
+  w_du: 0.001
+  w_K: 0.005

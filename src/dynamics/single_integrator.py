@@ -20,4 +20,4 @@ class SingleIntegrator(BaseDynamics):
     def _build_matrices(self, sigma_w: float) -> None:
         self.register_buffer("_A", torch.eye(2, device=self.device))
         self.register_buffer("_B", self.dt * torch.eye(2, device=self.device))
-        self.register_buffer("_DDT", (sigma_w ** 2) * torch.eye(2, device=self.device))
+        self.register_buffer("_DDT", (sigma_w**2) * torch.eye(2, device=self.device))

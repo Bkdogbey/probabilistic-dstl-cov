@@ -106,7 +106,8 @@ class Negation(STLFormula):
 class And(STLFormula):
     """
     Conjunction: ϕ₁ ∧ ϕ₂
-    Frechet bounds: lower = max(l1 + l2 - 1, 0),  upper = min(u1, u2)
+    Product lower bound: P(A∩B) >= P(A)·P(B) under independence.
+    Upper bound: min(u1, u2)  (Fréchet)
     """
 
     def __init__(self, subformula1, subformula2):
@@ -119,7 +120,7 @@ class And(STLFormula):
         trace2 = self.subformula2(belief_trajectory, scale=scale, keepdim=keepdim, **kwargs)
         l1, u1 = trace1[..., 0:1], trace1[..., 1:2]
         l2, u2 = trace2[..., 0:1], trace2[..., 1:2]
-        lower = torch.maximum(l1 + l2 - 1.0, torch.zeros_like(l1))
+        lower = l1 * l2
         upper = torch.minimum(u1, u2)
         return torch.cat([lower, upper], dim=-1)
 
@@ -175,9 +176,7 @@ class TemporalOperator(STLFormula):
         self.operation = None  # set by subclass (Minish or Maxish)
 
         self.M = (
-            torch.tensor(np.diag(np.ones(self.rnn_dim - 1), k=1))
-            .requires_grad_(False)
-            .float()
+            torch.tensor(np.diag(np.ones(self.rnn_dim - 1), k=1)).requires_grad_(False).float()
         )
         self.b = torch.zeros(self.rnn_dim).unsqueeze(-1).requires_grad_(False).float()
         self.b[-1] = 1.0

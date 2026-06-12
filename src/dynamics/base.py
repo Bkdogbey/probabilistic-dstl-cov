@@ -42,9 +42,23 @@ class BaseDynamics(nn.Module, ABC):
     def _build_matrices(self, sigma_w: float) -> None:
         """Register system matrices _A [nx,nx], _B [nx,nu], _DDT [nx,nx] as buffers."""
 
+    def saturate(self, v: torch.Tensor) -> torch.Tensor:
+        """Smooth saturation u = u_max * tanh(v / u_max). Slope 1 at origin."""
+        if self.u_max is None:
+            return v
+        return self.u_max * torch.tanh(v / self.u_max)
+
+    def saturation_jacobian(self, v: torch.Tensor) -> torch.Tensor:
+        """Diagonal S_k = diag(1 - tanh²(v / u_max)) = diag(sech²(v / u_max)).
+        Uses 1 - tanh² (numerically stable) rather than 1/cosh² (overflows for large v)."""
+        if self.u_max is None:
+            return torch.eye(self.nu, dtype=v.dtype, device=v.device)
+        z = v / self.u_max
+        return torch.diag(1.0 - torch.tanh(z).pow(2))
+
     def bound_control(self, v: torch.Tensor) -> torch.Tensor:
-        """Smooth saturation: v in R^nu -> u in [-u_max, u_max]^nu."""
-        return self.u_max * torch.tanh(v)
+        """Alias for saturate (backwards compatibility)."""
+        return self.saturate(v)
 
     def forward(
         self,
@@ -72,11 +86,13 @@ class BaseDynamics(nn.Module, ABC):
         covs = [Sigma]
 
         for t in range(T):
-            u = self.bound_control(v_sequence[t])
+            v_t = v_sequence[t]
+            u = self.saturate(v_t)
             mu = self._A @ mu + self._B @ u
 
             if K is not None:
-                A_cl = self._A + self._B @ K[t]
+                S_t = self.saturation_jacobian(v_t)
+                A_cl = self._A + self._B @ S_t @ K[t]
                 Sigma = A_cl @ Sigma @ A_cl.T + self._DDT
             else:
                 Sigma = self._A @ Sigma @ self._A.T + self._DDT

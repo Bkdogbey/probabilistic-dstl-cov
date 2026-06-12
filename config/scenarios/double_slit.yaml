@@ -1,0 +1,36 @@
+# Double slit: ego must navigate through a narrow gap between two rectangular walls.
+# Tests the probabilistic planner under spatial constraint + Gaussian uncertainty.
+# Gap at y ∈ [1.5, 4.5], ego starts at gap centre (y=3.0), must reach past the walls (x > 5.5).
+# T=20, dt=0.1 → 2 s horizon.
+
+label: "Double Slit (Open-Loop)"
+horizon: 20
+
+initial_state:
+  mean: [0.0, 3.0, 2.5, 0.0]          # [x, y, vx, vy] — gap centre, moving right
+  cov_diag: [0.05, 0.05, 0.02, 0.02]
+
+goal:
+  x: [5.5, 12.0]                       # past the slit walls (x_max = 5.5)
+  y: [1.5, 4.5]                        # must stay within gap y-range
+
+bounds:
+  x: [-0.5, 12.5]
+  y: [-1.5, 7.5]
+
+rect_obstacles:
+  - x: [2.5, 5.5]
+    y: [4.5, 7.0]                      # top wall
+  - x: [2.5, 5.5]
+    y: [-1.0, 1.5]                     # bottom wall
+
+optimizer:
+  lr_v: 0.05
+  max_iters: 500
+  warmup_iters: 100
+  alpha: 0.95
+
+weights:
+  w_phi: 10.0
+  w_du: 0.001
+  w_K: 0.005

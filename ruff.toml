@@ -3,6 +3,7 @@ target-version = "py38"
 
 [lint]
 select = ["E", "F", "N"]
-# N803/N806/N816: uppercase math variables (K, V, T, J, Sigma, A_cl) follow
-# standard control/linear-algebra notation throughout this codebase.
-ignore = ["N803", "N806", "N816"]
+# N802/N803/N806/N816: uppercase math variables (K, V, T, J, Sigma, A_cl) follow
+# standard control/linear-algebra notation throughout this codebase. N802 covers
+# test function names that name the variable under test (test_K_grad_flows, etc.).
+ignore = ["N802", "N803", "N806", "N816"]
