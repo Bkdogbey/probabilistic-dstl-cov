@@ -1,0 +1,8 @@
+line-length = 99
+target-version = "py38"
+
+[lint]
+select = ["E", "F", "N"]
+# N803/N806/N816: uppercase math variables (K, V, T, J, Sigma, A_cl) follow
+# standard control/linear-algebra notation throughout this codebase.
+ignore = ["N803", "N806", "N816"]

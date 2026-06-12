@@ -12,7 +12,9 @@ class SingleIntegrator(BaseDynamics):
     Noise:   sigma_w on all channels
     """
 
-    def __init__(self, dt: float = 0.1, u_max: float = 1.0, sigma_w: float = 0.05, device: str = "cpu"):
+    def __init__(
+        self, dt: float = 0.1, u_max: float = 1.0, sigma_w: float = 0.05, device: str = "cpu"
+    ) -> None:
         super().__init__(dt=dt, u_max=u_max, sigma_w=sigma_w, nx=2, nu=2, device=device)
 
     def _build_matrices(self, sigma_w: float) -> None:

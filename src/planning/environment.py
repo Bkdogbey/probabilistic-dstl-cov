@@ -1,13 +1,15 @@
+"""Workspace environment: probabilistic predicates and STL specification builder."""
+
 import math
 import torch
-from pdstl.operators import STL_Formula, Always, Eventually, And
+from pdstl.operators import STLFormula, Always, Eventually, And
 
 
 # =============================================================================
 # PROBABILISTIC PREDICATES
 # =============================================================================
 
-def normal_cdf(value, mean, var):
+def normal_cdf(value: torch.Tensor, mean: torch.Tensor, var: torch.Tensor) -> torch.Tensor:
     """
     Computes P(X <= value) for X ~ N(mean, var).
     Standard Normal CDF Phi(z) where z = (value - mean) / sigma
@@ -17,7 +19,7 @@ def normal_cdf(value, mean, var):
     return 0.5 * (1 + torch.erf(z / math.sqrt(2.0)))
 
 
-class RectangularGoalPredicate(STL_Formula):
+class RectangularGoalPredicate(STLFormula):
     """
     P_goal(t) = min( P(x >= x_min), P(x <= x_max), P(y >= y_min), P(y <= y_max) )
 
@@ -56,7 +58,7 @@ class RectangularGoalPredicate(STL_Formula):
         return f"goal([{self.x_min},{self.x_max}]×[{self.y_min},{self.y_max}])"
 
 
-class RectangularObstaclePredicate(STL_Formula):
+class RectangularObstaclePredicate(STLFormula):
     """
     P_safe(t) = max( P(x <= x_min), P(x >= x_max), P(y <= y_min), P(y >= y_max) )
     Safe if the robot is to the left, right, below, or above the obstacle.
@@ -94,7 +96,7 @@ class RectangularObstaclePredicate(STL_Formula):
         return f"avoid([{self.x_min},{self.x_max}]×[{self.y_min},{self.y_max}])"
 
 
-class CircularObstaclePredicate(STL_Formula):
+class CircularObstaclePredicate(STLFormula):
     """
     P_safe(t) = P( ||x(t) - center|| > radius )
     Approximated via projected variance along the radial direction.
@@ -147,27 +149,27 @@ class Environment:
         self.bounds = None
         self.device = device
 
-    def add_obstacle(self, x_range, y_range):
+    def add_obstacle(self, x_range: list, y_range: list) -> None:
         """Axis-aligned rectangular obstacle."""
         self.obstacles.append({"x": x_range, "y": y_range})
 
-    def add_circle_obstacle(self, center, radius):
+    def add_circle_obstacle(self, center: list, radius: float) -> None:
         """Circular obstacle defined by center [x, y] and radius r."""
         self.circle_obstacles.append({"center": center, "radius": radius})
 
-    def add_visit_region(self, x_range, y_range):
+    def add_visit_region(self, x_range: list, y_range: list) -> None:
         """Region that must be visited at some point (liveness)."""
         self.visit_regions.append({"x": x_range, "y": y_range})
 
-    def set_goal(self, x_range, y_range):
+    def set_goal(self, x_range: list, y_range: list) -> None:
         """Goal region G = [x_min, x_max] × [y_min, y_max]."""
         self.goal = {"x": x_range, "y": y_range}
 
-    def set_bounds(self, x_range, y_range):
+    def set_bounds(self, x_range: list, y_range: list) -> None:
         """Workspace bounds (treated as a always-satisfy region)."""
         self.bounds = {"x": x_range, "y": y_range}
 
-    def get_specification(self, T, t_goal_start=0):
+    def get_specification(self, T: int, t_goal_start: int = 0) -> STLFormula:
         """
         Build the combined STL formula: phi = (Eventually Goal) ∧ (Always Safe)
 
@@ -176,7 +178,7 @@ class Environment:
             t_goal_start: earliest timestep the goal can be reached
 
         Returns:
-            STL_Formula producing [B, T+1, 2] traces
+            STLFormula producing [B, T+1, 2] traces
         """
         specs = []
 

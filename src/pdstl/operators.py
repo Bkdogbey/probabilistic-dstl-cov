@@ -1,3 +1,10 @@
+"""Probabilistic STL operators over Gaussian belief trajectories.
+
+Provides STLFormula (base), boolean operators (And, Or, Negation),
+smooth min/max (Minish, Maxish), and temporal operators (Always, Eventually).
+All operators propagate probability-interval bounds [lower, upper] in [0,1].
+"""
+
 import torch
 import numpy as np
 
@@ -5,15 +12,17 @@ import numpy as np
 # =============================================================================
 # BASE STL FORMULA
 # =============================================================================
-class STL_Formula(torch.nn.Module):
+class STLFormula(torch.nn.Module):
     """
     Base class for Probabilistic STL formulas.
     """
 
     def __init__(self):
-        super(STL_Formula, self).__init__()
+        super(STLFormula, self).__init__()
 
-    def robustness_trace(self, belief_trajectory, scale=-1, keepdim=True, **kwargs):
+    def robustness_trace(
+        self, belief_trajectory, scale: float = -1, keepdim: bool = True, **kwargs
+    ) -> torch.Tensor:
         """
         Compute robustness trace for belief trajectory.
 
@@ -28,7 +37,7 @@ class STL_Formula(torch.nn.Module):
         """
         raise NotImplementedError("robustness_trace not yet implemented")
 
-    def forward(self, belief_trajectory, **kwargs):
+    def forward(self, belief_trajectory, **kwargs) -> torch.Tensor:
         """Forward pass delegates to robustness_trace"""
         return self.robustness_trace(belief_trajectory, **kwargs)
 
@@ -74,7 +83,7 @@ class Maxish(torch.nn.Module):
 # =============================================================================
 # BOOLEAN OPERATORS
 # =============================================================================
-class Negation(STL_Formula):
+class Negation(STLFormula):
     """
     Negation: ¬ϕ
     Swaps and complements bounds: [lower, upper] -> [1 - upper, 1 - lower]
@@ -94,7 +103,7 @@ class Negation(STL_Formula):
         return f"¬({self.subformula})"
 
 
-class And(STL_Formula):
+class And(STLFormula):
     """
     Conjunction: ϕ₁ ∧ ϕ₂
     Frechet bounds: lower = max(l1 + l2 - 1, 0),  upper = min(u1, u2)
@@ -118,7 +127,7 @@ class And(STL_Formula):
         return f"({self.subformula1}) ∧ ({self.subformula2})"
 
 
-class Or(STL_Formula):
+class Or(STLFormula):
     """
     Disjunction: ϕ₁ ∨ ϕ₂
     Frechet bounds: lower = max(l1, l2),  upper = min(u1 + u2, 1)
@@ -145,14 +154,14 @@ class Or(STL_Formula):
 # =============================================================================
 # TEMPORAL OPERATORS BASE
 # =============================================================================
-class Temporal_Operator(STL_Formula):
+class TemporalOperator(STLFormula):
     """
     Base class for temporal operators (Always, Eventually).
     Uses a backward RNN pass for O(T) forward-looking semantics.
     """
 
     def __init__(self, subformula, interval=None):
-        super(Temporal_Operator, self).__init__()
+        super(TemporalOperator, self).__init__()
         self.subformula = subformula
         self.interval = interval
         self._interval = [0, np.inf] if self.interval is None else self.interval
@@ -215,7 +224,7 @@ class Temporal_Operator(STL_Formula):
 # =============================================================================
 # ALWAYS
 # =============================================================================
-class Always(Temporal_Operator):
+class Always(TemporalOperator):
     """
     □_I ϕ: Always operator — computes smooth min over time interval.
     """
@@ -252,7 +261,7 @@ class Always(Temporal_Operator):
 # =============================================================================
 # EVENTUALLY
 # =============================================================================
-class Eventually(Temporal_Operator):
+class Eventually(TemporalOperator):
     """
     ◇_I ϕ: Eventually operator — computes smooth max over time interval.
     """

@@ -1,2 +1,2 @@
-from planning.environment import Environment
-from planning.planner import ProbabilisticSTLPlanner
+from planning.environment import Environment as Environment
+from planning.planner import ProbabilisticSTLPlanner as ProbabilisticSTLPlanner

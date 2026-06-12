@@ -27,7 +27,7 @@ def _build_env(cfg, device="cpu"):
 # LANE CHANGE — OPEN LOOP
 # =============================================================================
 with skip_run("run", "Lane Change - Open Loop") as check, check():
-    cfg = yaml.safe_load(open("configs/scenarios/lane_change.yaml"))
+    cfg = yaml.safe_load(open("config/scenarios/lane_change.yaml"))
     T = cfg["horizon"]
 
     dyn = DoubleIntegrator(dt=0.1, u_max=2.0, sigma_w=0.1)
@@ -54,7 +54,7 @@ with skip_run("run", "Lane Change - Open Loop") as check, check():
 # LANE CHANGE — CLOSED LOOP
 # =============================================================================
 with skip_run("run", "Lane Change - Closed Loop") as check, check():
-    cfg = yaml.safe_load(open("configs/scenarios/lane_change_closed.yaml"))
+    cfg = yaml.safe_load(open("config/scenarios/lane_change_closed.yaml"))
     T = cfg["horizon"]
 
     dyn = DoubleIntegrator(dt=0.1, u_max=2.0, sigma_w=0.1)
@@ -81,7 +81,7 @@ with skip_run("run", "Lane Change - Closed Loop") as check, check():
 # =============================================================================
 # SIDE-BY-SIDE COMPARISON
 # =============================================================================
-with skip_run("skip", "Open vs Closed Comparison") as check, check():
+with skip_run("run", "Open vs Closed Comparison") as check, check():
     def _run(scenario_path, steerer):
         cfg = yaml.safe_load(open(scenario_path))
         T = cfg["horizon"]
@@ -94,8 +94,8 @@ with skip_run("skip", "Open vs Closed Comparison") as check, check():
         planner = ProbabilisticSTLPlanner(dyn, env, T, steerer=steerer, config=planner_cfg)
         return planner.solve(mu0, Sigma0), env
 
-    ol_result, env = _run("configs/scenarios/lane_change.yaml", "open_loop")
-    cl_result, _   = _run("configs/scenarios/lane_change_closed.yaml", "closed_loop")
+    ol_result, env = _run("config/scenarios/lane_change.yaml", "open_loop")
+    cl_result, _   = _run("config/scenarios/lane_change_closed.yaml", "closed_loop")
 
     os.makedirs("results", exist_ok=True)
     plot_comparison(ol_result, cl_result, env, save_path="results/comparison.png")

@@ -39,7 +39,10 @@ package-dir = {"" = "src"}
 # Ruff: Linting, PEP8, and naming convention enforcement
 [tool.ruff]
 select = ["E", "F", "N"]  # E: pycodestyle, F: pyflakes, N: pep8-naming
-line-length = 88
+# N803/N806/N816: suppress for domain-specific uppercase math variables
+# (K, V, T, J, Sigma, A_cl follow standard control/linear-algebra notation)
+ignore = ["N803", "N806", "N816"]
+line-length = 99
 target-version = "py38"
 
 # pytest

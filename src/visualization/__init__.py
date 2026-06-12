@@ -1,3 +1,5 @@
+"""Matplotlib helpers for plotting belief trajectories and environment layouts."""
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
